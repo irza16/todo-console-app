@@ -10,7 +10,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
+backend/__pycache__/
+backend/lib/
 lib64/
 parts/
 sdist/
