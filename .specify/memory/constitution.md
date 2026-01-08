@@ -1,144 +1,205 @@
 <!--
   Sync Impact Report
-  Version change: N/A → 1.0.0 (initial creation)
-  Added sections: All 5 core principles, Technology Constraints, Code Standards,
-                  Data Model, User Experience Rules, Quality Gates, Development Workflow,
-                  Success Definition, Governance
-  Removed sections: None (initial creation)
-  Templates requiring updates: None (templates already compatible)
+  Version change: 1.0.0 → 2.0.0 (Phase I → Phase II)
+  Added sections:
+    - Multi-user architecture principle
+    - Type-safe full-stack principle
+    - Secure by default principle
+    - Production-ready patterns principle
+    - Full-stack technology constraints (Next.js, FastAPI, Neon, Better Auth, etc.)
+    - Monorepo structure (frontend/ and backend/ folders)
+    - JWT authentication requirements
+    - API security constraints
+    - Deployment and hosting constraints
+    - New success criteria for Phase II
+  Removed sections:
+    - Console/CLI specific constraints
+    - In-memory storage constraints
+    - Python-only naming conventions
+  Templates requiring updates:
+    - .specify/templates/spec-template.md ✅ (Phase II compatible)
+    - .specify/templates/plan-template.md ✅ (Phase II compatible)
+    - .specify/templates/tasks-template.md ✅ (Phase II compatible)
   Follow-up TODOs: None
 -->
 
-# Todo Console App Constitution
+# Todo Full-Stack Web Application Constitution
 
 ## Core Principles
 
-### 1. Simplicity First
-Keep code simple and readable. Each function must have a single responsibility.
-Avoid over-engineering and external libraries unless absolutely necessary.
-The simplest solution that meets requirements is the correct solution.
+### 1. Spec-Driven Development with Subagent Orchestration
+All code must be generated from specifications using Claude Code subagents.
+Manual coding is NOT allowed. Iterate on specs, not code - bugs in code mean
+specs need refinement. Every feature requires: specification → plan → tasks →
+implementation via subagents.
 
-### 2. Spec-Driven Development
-All code must be generated from specifications. Manual coding is NOT allowed.
-Specifications must be clear and detailed before any implementation begins.
-Iterate on specs, not code - bugs in code mean specs need refinement.
+### 2. Multi-User Architecture
+Each user owns their data in isolation. All database queries MUST filter by
+user_id. No cross-user data access. Authentication establishes identity before
+any privileged operation. User isolation is non-negotiable and enforced at
+the data layer.
 
-### 3. User-Centric Design
-Design interactions for real users, not developers.
-Provide clear prompts and helpful error messages.
-Confirm destructive actions (delete) to prevent accidental data loss.
-Ensure intuitive menu navigation with predictable behavior.
+### 3. Type-Safe Full-Stack
+TypeScript frontend and Python backend share data contracts. API schemas are
+defined once and validated at both ends. Frontend uses camelCase, backend uses
+snake_case with automatic conversion. Shared types ensure end-to-end type safety.
 
-## Technology Constraints
+### 4. Secure by Default
+JWT authentication with proper verification on all protected endpoints.
+Input validation on both client and server. No hardcoded secrets - use .env
+variables only. CORS configured explicitly for frontend domain. SQL injection
+prevention via SQLModel ORM.
+
+### 5. Production-Ready Patterns
+Error handling with user-friendly messages. Loading states (skeletons/spinners)
+for all async operations. Responsive design for mobile, tablet, desktop.
+Comprehensive API documentation via OpenAPI/Swagger UI.
+
+## Technology Stack
 
 ### Required Stack
-- **Language**: Python 3.13 or higher
-- **Storage**: In-memory only (Python list/dict)
-- **Interface**: Command-line (terminal/console)
-- **Dependencies**: Standard library only (no pip packages)
+- **Frontend**:
+  - Framework: Next.js 15+ (App Router)
+  - Language: TypeScript
+  - Styling: Tailwind CSS
+  - UI Components: shadcn/ui
+  - Authentication: Better Auth
+- **Backend**:
+  - Framework: FastAPI 0.115+
+  - Language: Python 3.13+
+  - ORM: SQLModel
+  - Validation: Pydantic
+- **Database**:
+  - Provider: Neon Serverless PostgreSQL 14+
+- **Infrastructure**:
+  - Frontend hosting: Vercel (free tier)
+  - Backend hosting: Railway/Render/Heroku (free tier acceptable)
+- **API**:
+  - Style: RESTful JSON
+  - Auth: JWT Bearer tokens
+  - Documentation: OpenAPI at /docs
 
-### Forbidden in Phase I
-- Databases (SQLite, PostgreSQL, etc.)
-- Web frameworks (Flask, FastAPI, Django)
-- File persistence (JSON, CSV, pickle)
-- External APIs or services
-- GUI frameworks (tkinter, PyQt)
-- AI/ML libraries
-
-## Code Standards
-
-### Structure
-- Single file: `src/main.py`
-- Functions for each operation with clear separation of concerns
-- Main menu loop at bottom of file
+### Code Organization
+- Monorepo structure: `frontend/` and `backend/` folders
+- Shared types: Define contracts in frontend, mirror in backend
+- Environment variables: `.env.example` templates, no secrets committed
 
 ### Naming Conventions
-- Functions: `snake_case` (e.g., `add_task`, `view_tasks`)
-- Variables: `snake_case` (e.g., `task_list`, `user_input`)
-- Constants: `UPPER_CASE` (e.g., `MAX_TASKS`)
-
-### Documentation
-- Each function MUST have a docstring
-- Explain complex logic with inline comments
-- README MUST include setup and run instructions
-
-### Error Handling
-- Validate all user input before processing
-- Handle invalid menu choices gracefully without crashing
-- Catch and display errors clearly with actionable messages
-- System must always recover, never terminate unexpectedly
-
-## Data Model
-
-### Task Structure
-Each task MUST be a Python dictionary with:
-```python
-{
-    "id": int,           # Unique auto-incrementing ID
-    "title": str,        # Required, max 200 characters
-    "description": str,  # Optional, max 1000 characters
-    "completed": bool    # Default: False
-}
-```
-
-### Storage
-- All tasks stored in a Python list: `tasks = []`
-- IDs start at 1 and auto-increment with each new task
-- No persistence - data is lost when application exits
+- TypeScript: camelCase (e.g., `taskList`, `userId`)
+- Python: snake_case (e.g., `task_list`, `user_id`)
+- Constants: UPPER_CASE in respective languages
 
 ## User Experience Rules
 
-### Menu System
-- Display numbered options clearly for easy selection
-- Show current state (e.g., "3 tasks pending")
-- Allow easy exit (consistent exit option, e.g., option 6)
-- Loop continuously until user chooses to exit
+### Authentication Flow
+- Signup creates user with encrypted password
+- Login returns JWT for protected requests
+- Protected routes redirect to login when unauthenticated
+- Logout clears local session
+
+### Task Management
+- Create, read, update, delete tasks via web UI
+- Each user sees only their own tasks
+- Optimistic UI updates for responsive feel
+- Error states communicate clearly what went wrong
+
+### Responsive Design
+- Mobile-first approach
+- Touch-friendly controls
+- Breakpoints for tablet and desktop
+- Consistent experience across devices
+
+### Loading States
+- Skeleton loaders for data fetching
+- Spinners for async operations
+- Disabled states during submission
+- No silent failures
+
+## Data Model
+
+### User Structure
+```python
+# Backend (SQLModel)
+{
+    "id": int,           # Primary key
+    "email": str,        # Unique, validated
+    "password_hash": str # Never store plain text
+}
+```
+
+### Task Structure
+```python
+# Backend (SQLModel)
+{
+    "id": int,           # Primary key
+    "user_id": int,      # Foreign key, indexed
+    "title": str,        # Required, max 200 chars
+    "description": str,  # Optional, max 1000 chars
+    "completed": bool,   # Default: False
+    "created_at": datetime,
+    "updated_at": datetime
+}
+```
+
+### User Isolation
+- Every task query includes: `WHERE user_id = :current_user_id`
+- JWT token contains `user_id` claim
+- No cross-user data leakage possible
+
+## API Security
+
+### Authentication
+- All endpoints except `/auth/*` require valid JWT Bearer token
+- JWT verified on backend before processing requests
+- Tokens expire (configurable, recommend 24 hours)
+- Refresh token flow supported
 
 ### Input Validation
-- Reject empty task titles with clear error message
-- Accept empty descriptions (optional field)
-- Validate task IDs exist before operations
-- Handle non-numeric input gracefully
+- Pydantic models validate all request bodies
+- Frontend forms validate before submission
+- SQL injection prevention via SQLModel parameterized queries
+- XSS prevention via React's auto-escaping
 
-### Feedback
-- Confirm every action with clear message ("Task added!", "Task deleted!")
-- Show what was changed after each operation
-- Use clear, friendly language throughout
-
-### Formatting
-- Use separators for readability (===, ---)
-- Show task status: [Pending] or [Completed]
-- Number tasks consistently for easy reference
-- Keep output clean and scannable
+### CORS Configuration
+- Explicit allowed origins (frontend domain)
+- Credentials: true only with specific origin
+- Methods: REST standard (GET, POST, PUT, DELETE)
+- Headers: Authorization, Content-Type
 
 ## Quality Gates
 
 Before submission, ensure:
-- All 5 basic features work correctly without errors
-- No crashes on invalid input of any kind
-- Code is generated by Claude Code, not written manually
-- Specifications are complete and clearly documented
-- README includes complete setup and run instructions
-- Code follows all naming conventions
-- All functions have proper docstrings
+- [ ] Multi-user system: Signup, login, protected routes work
+- [ ] CRUD operations: Create, read, update, delete via web UI
+- [ ] User isolation: Users only see their own tasks
+- [ ] Error handling: User-friendly messages for all error cases
+- [ ] Loading states: Skeletons/spinners on all async operations
+- [ ] Responsive design: Works on mobile, tablet, desktop
+- [ ] API documentation: Swagger UI accessible at /docs
+- [ ] Deployment: Frontend on Vercel, backend on cloud platform
+- [ ] Type safety: No `any` types, proper TypeScript strict mode
+- [ ] Code generation: All code via subagents from specs
 
 ## Development Workflow
 
-1. Write detailed feature specifications
-2. Give specs to Claude Code for implementation
-3. Test generated code against requirements
-4. If bugs found → refine specs, regenerate code
-5. Repeat until all requirements met
-6. **Never manually fix code** - fix the spec instead
+1. **Specify**: Write feature specification in `specs/<feature>/spec.md`
+2. **Plan**: Create architectural plan in `specs/<feature>/plan.md`
+3. **Tasks**: Generate testable tasks in `specs/<feature>/tasks.md`
+4. **Implement**: Execute tasks via subagents (`/sp.implement`)
+5. **Test**: Validate against acceptance criteria
+6. **Iterate**: If bugs → refine specs, regenerate code
+7. **Never**: Manually fix code - fix the spec instead
 
 ## Success Definition
 
-Phase I is complete when:
-- All 5 features work flawlessly without errors
-- User can manage tasks efficiently through the CLI
-- Code is clean, well-documented, and follows conventions
-- Judges can run it with zero setup beyond Python installation
-- Code was generated entirely through Spec-Driven Development
+Phase II is complete when:
+- Users can signup, login, and manage their own tasks via web UI
+- All CRUD operations work through REST API with JWT auth
+- Frontend deploys to Vercel, backend to cloud platform
+- API documentation available at /docs
+- Responsive design works on mobile, tablet, desktop
+- User-friendly error messages and loading states throughout
+- All code generated by subagents from specifications
 
 ## Governance
 
@@ -146,13 +207,13 @@ This constitution supersedes all other development practices for this project.
 
 **Amendment Process**:
 - Constitution changes require documented rationale
-- Backward-incompatible changes require major version bump (2.0.0+)
-- New principles or expanded guidance requires minor version bump (1.1.0+)
-- Clarifications, wording fixes, typo corrections use patch bump (1.0.1+)
+- Backward-incompatible changes require major version bump (3.0.0+)
+- New principles or expanded guidance requires minor version bump (2.1.0+)
+- Clarifications, wording fixes, typo corrections use patch bump (2.0.1+)
 
 **Compliance**:
 - All PRs/reviews must verify constitution compliance
 - Complexity beyond constitution scope must be justified
 - Refer to CLAUDE.md for runtime development guidance
 
-**Version**: 1.0.0 | **Ratified**: 2025-12-31 | **Last Amended**: 2025-12-31
+**Version**: 2.0.0 | **Ratified**: 2025-12-31 | **Last Amended**: 2026-01-06
