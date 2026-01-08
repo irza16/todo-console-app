@@ -1,0 +1,17 @@
+{
+  "version": 2,
+  "buildCommand": "pip install --upgrade pip && pip install mangum",
+  "functions": {
+    "api/index.py": {
+      "runtime": "python3.9",
+      "maxDuration": 10,
+      "memory": 1024
+    }
+  },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/index.py"
+    }
+  ]
+}
