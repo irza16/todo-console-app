@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "buildCommand": "pip install --upgrade pip && pip install mangum",
   "functions": {
     "api/index.py": {
       "runtime": "python3.9",
