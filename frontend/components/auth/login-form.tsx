@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,8 +20,14 @@ export function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push("/tasks");
+    }
+  }, [isAuthenticated, router]);
+
+  // If already authenticated, return null to prevent rendering
   if (isAuthenticated) {
-    router.push("/tasks");
     return null;
   }
 
