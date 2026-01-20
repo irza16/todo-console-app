@@ -9,3 +9,7 @@ httpx>=0.28.0
 pydantic-settings>=2.0.0
 psycopg2-binary>=2.9.0
 bcrypt==4.0.1
+mcp>=1.0.0
+openai>=1.0.0
+# Note: Using OpenAI SDK with Groq endpoint (OpenAI-compatible API)
+# No additional dependencies needed - same openai package works with Groq
