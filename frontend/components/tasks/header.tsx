@@ -12,6 +12,14 @@ export function Header() {
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <h1 className="text-xl font-semibold">Todo App</h1>
+          <nav className="ml-8 flex items-center space-x-6 text-sm font-medium">
+            <a href="/tasks" className="transition-colors hover:text-foreground/80 text-foreground">
+              Tasks
+            </a>
+            <a href="/chat" className="transition-colors hover:text-foreground/80 text-foreground">
+              Chat Assistant
+            </a>
+          </nav>
         </div>
 
         {user && (

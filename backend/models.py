@@ -1,5 +1,5 @@
 """
-SQLModel database models for User and Task entities.
+SQLModel database models for User, Task, Conversation, and Message entities.
 """
 from datetime import datetime
 from sqlmodel import SQLModel, Field, Relationship
@@ -42,6 +42,37 @@ class Task(SQLModel, table=True):
 
     class Config:
         from_attributes = True
+
+
+class Conversation(SQLModel, table=True):
+    __tablename__ = "conversations"
+
+    """Conversation model for chat history."""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: str = Field(foreign_key="user.id", index=True)  # For user isolation queries
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False, index=True)  # For chronological ordering
+    updated_at: Optional[datetime] = Field(default=None)
+
+    # Relationship to messages
+    messages: List["Message"] = Relationship(
+        back_populates="conversation",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"}
+    )
+
+
+class Message(SQLModel, table=True):
+    __tablename__ = "messages"
+
+    """Message model for storing chat messages."""
+    id: Optional[int] = Field(default=None, primary_key=True)
+    conversation_id: int = Field(foreign_key="conversations.id", index=True)  # For conversation history retrieval
+    role: str = Field(max_length=20, index=True)  # "user" or "assistant" - for filtering by role
+    content: str = Field(max_length=10000)
+    tool_calls: Optional[str] = Field(default=None)  # JSON string
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False, index=True)  # For chronological ordering
+
+    # Relationship to conversation
+    conversation: Conversation = Relationship(back_populates="messages")
 
 
 # Pydantic schemas for request/response

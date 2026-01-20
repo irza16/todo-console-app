@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: Todo Chat API
+  description: API for the AI-powered Todo Chatbot with MCP Architecture
+  version: 1.0.0
+servers:
+  - url: https://api.todo-app.com
+    description: Production server
+  - url: http://localhost:8000
+    description: Development server
+
+paths:
+  /api/{user_id}/chat:
+    post:
+      summary: Process a chat message for a user
+      description: Send a message to the AI assistant and get a response
+      operationId: chat
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          description: The ID of the user
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: Successful response from the AI assistant
+          content:
+            application/json:
+              schema:
+              $ref: '#/components/schemas/ChatResponse'
+        '400':
+          description: Bad request - invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - user not authorized to access this resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ChatRequest:
+      type: object
+      properties:
+        conversation_id:
+          type: integer
+          description: Optional ID of existing conversation (creates new if not provided)
+          nullable: true
+        message:
+          type: string
+          description: The message sent by the user
+          example: "add buy groceries"
+      required:
+        - message
+
+    ChatResponse:
+      type: object
+      properties:
+        conversation_id:
+          type: integer
+          description: ID of the conversation (newly created or existing)
+        response:
+          type: string
+          description: The AI assistant's response
+          example: "Created task: Buy Groceries"
+        tool_calls:
+          type: array
+          description: List of tools called during message processing
+          items:
+            $ref: '#/components/schemas/ToolCall'
+      required:
+        - conversation_id
+        - response
+        - tool_calls
+
+    ToolCall:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the tool called
+          example: "add_task"
+        arguments:
+          type: object
+          description: Arguments passed to the tool
+          example:
+            user_id: "12345"
+            title: "buy groceries"
+        result:
+          type: object
+          description: Result returned by the tool
+          example:
+            task_id: 5
+            status: "created"
+            title: "buy groceries"
+
+    Error:
+      type: object
+      properties:
+        detail:
+          type: string
+          description: Detailed error message
+          example: "Invalid input data"
+
+security:
+  - bearerAuth: []

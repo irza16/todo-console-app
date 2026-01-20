@@ -8,7 +8,7 @@ import os
 
 from config import settings
 from db import create_db_and_tables
-from routes import auth, tasks
+from routes import auth, tasks, chat
 
 
 @asynccontextmanager
@@ -42,6 +42,7 @@ app.add_middleware(
 # Include routers
 app.include_router(auth.router, prefix="/api")
 app.include_router(tasks.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
 
 
 @app.get("/")

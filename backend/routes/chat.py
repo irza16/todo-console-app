@@ -1,0 +1,123 @@
+"""
+Chat API routes for AI-powered Todo Chatbot
+"""
+import json
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+from typing import Optional, List, Dict, Any
+from sqlmodel import Session, select
+from models import Conversation, Message
+from db import get_session, engine
+from agents.todo_agent import process_chat_message
+from middleware.auth import get_current_user
+from models import UserResponse
+
+
+router = APIRouter(tags=["chat"])
+
+
+class ChatRequest(BaseModel):
+    conversation_id: Optional[int] = None
+    message: str
+
+
+class ChatResponse(BaseModel):
+    conversation_id: int
+    response: str
+    tool_calls: List[Dict[str, Any]]
+
+
+@router.post("/{user_id}/chat", response_model=ChatResponse)
+async def chat(
+    user_id: str,
+    request: ChatRequest,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Process a chat message for a user using the AI agent
+    """
+    # Verify that the authenticated user matches the user_id in the path
+    # Note: current_user.id is an integer while user_id from path is a string
+    if str(current_user.id) != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to access this user's chat"
+        )
+
+    # Get or create conversation
+    conversation_id = request.conversation_id
+
+    if conversation_id is None:
+        # Create a new conversation
+        conversation = Conversation(user_id=user_id)
+        with Session(engine) as session:
+            session.add(conversation)
+            session.commit()
+            session.refresh(conversation)
+            conversation_id = conversation.id
+    else:
+        # Verify the conversation belongs to the user
+        with Session(engine) as session:
+            conversation = session.get(Conversation, conversation_id)
+            if not conversation or str(conversation.user_id) != user_id:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Not authorized to access this conversation"
+                )
+
+    # Fetch conversation history
+    with Session(engine) as session:
+        # Get messages for this conversation ordered by creation time
+        statement = select(Message).where(
+            Message.conversation_id == conversation_id
+        ).order_by(Message.created_at)
+        messages = session.exec(statement).all()
+
+        # Format messages for the agent
+        conversation_history = [
+            {
+                "role": msg.role,
+                "content": msg.content
+            }
+            for msg in messages
+        ]
+
+    # Process the message with the AI agent
+    try:
+        result = process_chat_message(
+            user_id=user_id,
+            message=request.message,
+            conversation_history=conversation_history
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing chat message: {str(e)}"
+        )
+
+    # Store the user's message in the database
+    user_message = Message(
+        conversation_id=conversation_id,
+        role="user",
+        content=request.message,
+        tool_calls=None  # User messages don't have tool calls
+    )
+
+    # Store the agent's response in the database with tool calls
+    assistant_message = Message(
+        conversation_id=conversation_id,
+        role="assistant",
+        content=result["response"],
+        tool_calls=json.dumps(result["tool_calls"]) if result["tool_calls"] else None
+    )
+
+    with Session(engine) as session:
+        session.add(user_message)
+        session.add(assistant_message)
+        session.commit()
+
+    return ChatResponse(
+        conversation_id=conversation_id,
+        response=result["response"],
+        tool_calls=result["tool_calls"]
+    )
