@@ -50,7 +50,7 @@ export default function ChatPage() {
 
     const loadConversations = async () => {
       try {
-        const response = await api.get(`/${user.id}/conversations`);
+        const response = await api.get(`/api/${user.id}/conversations`);
         setConversations(response.data);
 
         // Auto-select the most recent conversation if available
@@ -73,7 +73,7 @@ export default function ChatPage() {
   // Load messages for a specific conversation
   const loadConversationMessages = async (convId: number) => {
     try {
-      const response = await api.get(`/${user.id}/conversations/${convId}/messages`);
+      const response = await api.get(`/api/${user.id}/conversations/${convId}/messages`);
 
       const formattedMessages: Message[] = response.data.map((msg: MessageResponse) => ({
         id: msg.id.toString(),
@@ -140,7 +140,7 @@ export default function ChatPage() {
         requestBody.conversation_id = conversationId;
       }
 
-      const response = await api.post(`/${user.id}/chat`, requestBody);
+      const response = await api.post(`/api/${user.id}/chat`, requestBody);
 
       const data = response.data;
 
