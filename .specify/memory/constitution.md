@@ -89,7 +89,7 @@ Legacy interfaces continue to work without disruption during AI feature rollout.
 - **AI Technology Versions**:
   - Groq API: Latest (FREE tier)
   - OpenAI SDK: 1.0.0+ (used as Groq client)
-  - Model: llama-3.1-70b-versatile
+  - Model: llama-3.3-70b-versatile
   - Base URL: https://api.groq.com/openai/v1
 - **Database**:
   - Provider: Neon Serverless PostgreSQL 14+

@@ -1,0 +1,22 @@
+runtime:
+  cpu: 2
+  memory: 8GiB
+  accelerator: null
+secrets:
+  - GROQ_API_KEY
+storage:
+  - README.md
+  - app.py
+  - main.py
+  - models.py
+  - db.py
+  - requirements.txt
+  - agents/
+  - middleware/
+  - routes/
+  - utils/
+  - config.py
+  - create_test_user_local.py
+  - pyproject.toml
+  - .env.example
+  - todo_app.db

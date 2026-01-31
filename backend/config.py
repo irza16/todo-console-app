@@ -19,6 +19,9 @@ class Settings(BaseSettings):
     # CORS
     cors_origin: str = "http://localhost:3000"
 
+    # Groq
+    groq_api_key: str = ""
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"

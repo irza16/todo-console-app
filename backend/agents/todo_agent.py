@@ -7,14 +7,19 @@ import os
 from typing import Dict, Any, List
 from pydantic import BaseModel
 import json
-from mcp.server import Server
-from mcp.types import Prompt, Tool
+# Removed MCP server imports as they are not needed for direct tool calling
+# The tools are imported directly from mcp.tools
 
-# Initialize OpenAI client for Groq
-client = OpenAI(
-    api_key=os.getenv("GROQ_API_KEY"),
-    base_url="https://api.groq.com/openai/v1"
-)
+# Initialize OpenAI client for Groq (will be created when needed)
+def get_client():
+    """
+    Get OpenAI client configured for Groq
+    """
+    from openai import OpenAI
+    return OpenAI(
+        api_key=os.getenv("GROQ_API_KEY"),
+        base_url="https://api.groq.com/openai/v1"
+    )
 
 # Import MCP tools
 from mcp.tools import (
@@ -117,8 +122,9 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
     })
 
     # Call the Groq API with tools
+    client = get_client()
     response = client.chat.completions.create(
-        model="llama-3.1-70b-versatile",  # Using Groq's powerful model
+        model="llama-3.3-70b-versatile",  # Using Groq's powerful model
         messages=messages,
         tools=tools,
         tool_choice="auto",
@@ -178,8 +184,9 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
             messages.extend(tool_results)
 
             # Get the final response from the assistant
-            final_response = client.chat.completions.create(
-                model="llama-3.1-70b-versatile",
+            final_client = get_client()
+            final_response = final_client.chat.completions.create(
+                model="llama-3.3-70b-versatile",
                 messages=messages,
             )
 

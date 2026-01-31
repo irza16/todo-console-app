@@ -161,7 +161,7 @@ Modern users increasingly expect natural language interfaces for task management
 
 ## Dependencies
 
-- Groq API (llama-3.1-70b-versatile)
+- Groq API (llama-3.3-70b-versatile)
 - OpenAI SDK configured for Groq
 - Official MCP SDK
 - OpenAI ChatKit
@@ -184,7 +184,7 @@ Modern users increasingly expect natural language interfaces for task management
 - GROQ_API_KEY must be retrieved from environment variable
 - All MCP tools must be stateless and store state in the database
 - Timeline: Complete by December 21, 2025
-- LLM: Groq API with llama-3.1-70b-versatile model (FREE)
+- LLM: Groq API with llama-3.3-70b-versatile model (FREE)
 - OpenAI SDK: Used as client but pointing to Groq base_url
 - Base URL: https://api.groq.com/openai/v1
 - Zero API costs using Groq free tier
@@ -202,7 +202,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="llama-3.1-70b-versatile",
+    model="llama-3.3-70b-versatile",
     messages=messages,
     tools=tools
 )

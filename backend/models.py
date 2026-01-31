@@ -49,7 +49,7 @@ class Conversation(SQLModel, table=True):
 
     """Conversation model for chat history."""
     id: Optional[int] = Field(default=None, primary_key=True)
-    user_id: str = Field(foreign_key="user.id", index=True)  # For user isolation queries
+    user_id: int = Field(foreign_key="user.id", index=True)  # For user isolation queries
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False, index=True)  # For chronological ordering
     updated_at: Optional[datetime] = Field(default=None)
 

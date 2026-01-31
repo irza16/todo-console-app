@@ -6,11 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from sqlmodel import Session, select
-from models import Conversation, Message
+from models import Conversation, Message, UserResponse
 from db import get_session, engine
 from agents.todo_agent import process_chat_message
 from middleware.auth import get_current_user
-from models import UserResponse
 
 
 router = APIRouter(tags=["chat"])
@@ -121,3 +120,93 @@ async def chat(
         response=result["response"],
         tool_calls=result["tool_calls"]
     )
+
+
+class ConversationResponse(BaseModel):
+    id: int
+    user_id: int
+    created_at: str
+    updated_at: Optional[str]
+
+
+class MessageResponse(BaseModel):
+    id: int
+    conversation_id: int
+    role: str
+    content: str
+    tool_calls: Optional[str]
+    created_at: str
+
+
+@router.get("/{user_id}/conversations", response_model=List[ConversationResponse])
+async def get_conversations(
+    user_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Get all conversations for a user
+    """
+    if str(current_user.id) != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to access this user's conversations"
+        )
+
+    with Session(engine) as session:
+        statement = select(Conversation).where(
+            Conversation.user_id == int(user_id)
+        ).order_by(Conversation.created_at.desc())
+        conversations = session.exec(statement).all()
+
+        return [
+            ConversationResponse(
+                id=conv.id,
+                user_id=conv.user_id,
+                created_at=conv.created_at.isoformat(),
+                updated_at=conv.updated_at.isoformat() if conv.updated_at else None
+            )
+            for conv in conversations
+        ]
+
+
+@router.get("/{user_id}/conversations/{conversation_id}/messages", response_model=List[MessageResponse])
+async def get_conversation_messages(
+    user_id: str,
+    conversation_id: int,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Get all messages for a specific conversation
+    """
+    if str(current_user.id) != user_id:
+        raise HTTPException(
+            status_code=403,
+            detail="Not authorized to access this user's conversations"
+        )
+
+    with Session(engine) as session:
+        # Verify the conversation belongs to the user
+        conversation = session.get(Conversation, conversation_id)
+        if not conversation or str(conversation.user_id) != user_id:
+            raise HTTPException(
+                status_code=403,
+                detail="Not authorized to access this conversation"
+            )
+
+        # Get messages for this conversation ordered by creation time
+        statement = select(Message).where(
+            Message.conversation_id == conversation_id
+        ).order_by(Message.created_at)
+        messages = session.exec(statement).all()
+
+        return [
+            MessageResponse(
+                id=msg.id,
+                conversation_id=msg.conversation_id,
+                role=msg.role,
+                content=msg.content,
+                tool_calls=msg.tool_calls,
+                created_at=msg.created_at.isoformat()
+            )
+            for msg in messages
+        ]
