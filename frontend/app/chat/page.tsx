@@ -10,6 +10,7 @@ import { Bot, Send, User } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import api from "@/lib/api";
+import axios, { AxiosInstance } from "axios";
 
 interface Message {
   id: string;
@@ -34,6 +35,30 @@ interface MessageResponse {
   created_at: string;
 }
 
+// Create a separate API instance for chat to avoid double prefixing
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
+const chatApi: AxiosInstance = axios.create({
+  baseURL: API_URL ? `${API_URL}` : "",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  timeout: 10000,
+});
+
+// Add auth interceptor to chat API instance
+chatApi.interceptors.request.use(
+  (config) => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("auth_token");
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
 export default function ChatPage() {
   const { user, token, isAuthenticated, isLoading: authIsLoading } = useAuth();
   const [inputValue, setInputValue] = useState("");
@@ -50,7 +75,7 @@ export default function ChatPage() {
 
     const loadConversations = async () => {
       try {
-        const response = await api.get(`/api/${user.id}/conversations`);
+        const response = await chatApi.get(`/api/${user.id}/conversations`);
         setConversations(response.data);
 
         // Auto-select the most recent conversation if available
@@ -73,7 +98,7 @@ export default function ChatPage() {
   // Load messages for a specific conversation
   const loadConversationMessages = async (convId: number) => {
     try {
-      const response = await api.get(`/api/${user.id}/conversations/${convId}/messages`);
+      const response = await chatApi.get(`/api/${user.id}/conversations/${convId}/messages`);
 
       const formattedMessages: Message[] = response.data.map((msg: MessageResponse) => ({
         id: msg.id.toString(),
@@ -129,8 +154,8 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      // Use the axios API instance which handles authentication automatically
-      // Note: axios already has /api as base, so we just need /{user.id}/chat
+      // Use the separate chat API instance to avoid double prefixing of /api
+      // Backend expects /api/{user.id}/chat, so we include /api in the path
       const requestBody: any = {
         message: inputValue,
       };
@@ -140,7 +165,7 @@ export default function ChatPage() {
         requestBody.conversation_id = conversationId;
       }
 
-      const response = await api.post(`/api/${user.id}/chat`, requestBody);
+      const response = await chatApi.post(`/api/${user.id}/chat`, requestBody);
 
       const data = response.data;
 

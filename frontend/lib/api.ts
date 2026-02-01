@@ -8,7 +8,7 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 
 // Create axios instance
 const api: AxiosInstance = axios.create({
-  baseURL: API_URL ? `${API_URL}` : "",
+  baseURL: API_URL ? `${API_URL}/api` : "/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -76,17 +76,17 @@ api.interceptors.response.use(
 // Auth API
 export const authApi = {
   signup: async (data: SignupRequest): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>("/api/auth/signup", data);
+    const response = await api.post<AuthResponse>("/auth/signup", data);
     return response.data;
   },
 
   login: async (data: LoginRequest): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>("/api/auth/login", data);
+    const response = await api.post<AuthResponse>("/auth/login", data);
     return response.data;
   },
 
   me: async (): Promise<{ id: number; email: string; name: string }> => {
-    const response = await api.get("/api/auth/me");
+    const response = await api.get("/auth/me");
     return response.data;
   },
 };
@@ -94,32 +94,32 @@ export const authApi = {
 // Task API
 export const taskApi = {
   listTasks: async (userId: number): Promise<TaskListResponse> => {
-    const response = await api.get<TaskListResponse>(`/api/${userId}/tasks`);
+    const response = await api.get<TaskListResponse>(`/${userId}/tasks`);
     return response.data;
   },
 
   getTask: async (userId: number, taskId: number): Promise<Task> => {
-    const response = await api.get<Task>(`/api/${userId}/tasks/${taskId}`);
+    const response = await api.get<Task>(`/${userId}/tasks/${taskId}`);
     return response.data;
   },
 
   createTask: async (userId: number, data: TaskCreate): Promise<Task> => {
-    const response = await api.post<Task>(`/api/${userId}/tasks`, data);
+    const response = await api.post<Task>(`/${userId}/tasks`, data);
     return response.data;
   },
 
   updateTask: async (userId: number, taskId: number, data: Partial<TaskCreate>): Promise<Task> => {
-    const response = await api.put<Task>(`/api/${userId}/tasks/${taskId}`, data);
+    const response = await api.put<Task>(`/${userId}/tasks/${taskId}`, data);
     return response.data;
   },
 
   toggleComplete: async (userId: number, taskId: number): Promise<Task> => {
-    const response = await api.patch<Task>(`/api/${userId}/tasks/${taskId}/complete`);
+    const response = await api.patch<Task>(`/${userId}/tasks/${taskId}/complete`);
     return response.data;
   },
 
   deleteTask: async (userId: number, taskId: number): Promise<void> => {
-    await api.delete(`/api/${userId}/tasks/${taskId}`);
+    await api.delete(`/${userId}/tasks/${taskId}`);
   },
 };
 
