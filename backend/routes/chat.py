@@ -36,8 +36,13 @@ async def chat(
     Process a chat message for a user using the AI agent
     """
     # Verify that the authenticated user matches the user_id in the path
-    # Note: current_user.id is an integer while user_id from path is a string
-    if str(current_user.id) != user_id:
+    # Note: current_user is a dict, so access id as current_user["id"]
+    if "id" not in current_user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid user authentication"
+        )
+    if str(current_user["id"]) != user_id:
         raise HTTPException(
             status_code=403,
             detail="Not authorized to access this user's chat"
@@ -146,7 +151,12 @@ async def get_conversations(
     """
     Get all conversations for a user
     """
-    if str(current_user.id) != user_id:
+    if "id" not in current_user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid user authentication"
+        )
+    if str(current_user["id"]) != user_id:
         raise HTTPException(
             status_code=403,
             detail="Not authorized to access this user's conversations"
@@ -178,7 +188,12 @@ async def get_conversation_messages(
     """
     Get all messages for a specific conversation
     """
-    if str(current_user.id) != user_id:
+    if "id" not in current_user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid user authentication"
+        )
+    if str(current_user["id"]) != user_id:
         raise HTTPException(
             status_code=403,
             detail="Not authorized to access this user's conversations"
@@ -209,4 +224,36 @@ async def get_conversation_messages(
                 created_at=msg.created_at.isoformat()
             )
             for msg in messages
+        ]
+
+
+@router.get("/2/conversations", response_model=List[ConversationResponse])
+async def get_user_conversations_v2(
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Get all conversations for the current user (v2 API)
+    """
+    if "id" not in current_user:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid user authentication"
+        )
+
+    user_id = str(current_user["id"])
+
+    with Session(engine) as session:
+        statement = select(Conversation).where(
+            Conversation.user_id == int(user_id)
+        ).order_by(Conversation.created_at.desc())
+        conversations = session.exec(statement).all()
+
+        return [
+            ConversationResponse(
+                id=conv.id,
+                user_id=conv.user_id,
+                created_at=conv.created_at.isoformat(),
+                updated_at=conv.updated_at.isoformat() if conv.updated_at else None
+            )
+            for conv in conversations
         ]
