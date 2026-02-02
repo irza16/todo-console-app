@@ -59,6 +59,51 @@ chatApi.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Add response interceptor with error handling
+chatApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle errors with clear messages
+    if (error.response) {
+      const status = error.response.status;
+      const data = error.response.data;
+
+      if (status === 401) {
+        // Clear invalid token and redirect to login
+        if (typeof window !== "undefined") {
+          localStorage.removeItem("auth_token");
+        }
+        // Optionally redirect to login - we'll just return the error for the component to handle
+        const message = typeof data?.detail === "string" ? data.detail : "Invalid or expired session. Please log in again.";
+        return Promise.reject(new Error(message));
+      }
+
+      if (status === 400) {
+        let message = "Validation error.";
+        if (typeof data?.detail === "string") {
+          message = data.detail;
+        } else if (Array.isArray(data?.detail)) {
+          message = data.detail.map((d: any) => d.msg || "Validation error").join(", ");
+        }
+        return Promise.reject(new Error(message));
+      }
+
+      if (status === 404) {
+        return Promise.reject(new Error("Resource not found."));
+      }
+
+      const message = typeof data?.detail === "string" ? data.detail : `Request failed (${status})`;
+      return Promise.reject(new Error(message));
+    }
+
+    if (error.code === "ECONNABORTED") {
+      return Promise.reject(new Error("Request timed out. Please try again."));
+    }
+
+    return Promise.reject(new Error("Unable to connect to the server. Please check your connection."));
+  }
+);
+
 export default function ChatPage() {
   const { user, token, isAuthenticated, isLoading: authIsLoading } = useAuth();
   const [inputValue, setInputValue] = useState("");
@@ -75,7 +120,10 @@ export default function ChatPage() {
 
     const loadConversations = async () => {
       try {
-        const response = await chatApi.get(`/api/${user.id}/conversations`);
+        if (!user) {
+        throw new Error('User not authenticated');
+      }
+      const response = await chatApi.get(`/api/${user.id}/conversations`);
         setConversations(response.data);
 
         // Auto-select the most recent conversation if available
@@ -87,8 +135,14 @@ export default function ChatPage() {
           // Load messages for the selected conversation
           loadConversationMessages(latestConversation.id);
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error loading conversations:", error);
+
+        // Check if the error message indicates authentication issue
+        if (error.message && (error.message.includes("Invalid or expired session") || error.message.includes("Unauthorized access"))) {
+          toast.error("Session expired. Please log in again.");
+          window.location.href = "/login";
+        }
       }
     };
 
@@ -98,6 +152,9 @@ export default function ChatPage() {
   // Load messages for a specific conversation
   const loadConversationMessages = async (convId: number) => {
     try {
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
       const response = await chatApi.get(`/api/${user.id}/conversations/${convId}/messages`);
 
       const formattedMessages: Message[] = response.data.map((msg: MessageResponse) => ({
@@ -108,8 +165,14 @@ export default function ChatPage() {
       }));
 
       setMessages(formattedMessages);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error loading conversation messages:", error);
+
+      // Check if the error message indicates authentication issue
+      if (error.message && (error.message.includes("Invalid or expired session") || error.message.includes("Unauthorized access"))) {
+        toast.error("Session expired. Please log in again.");
+        window.location.href = "/login";
+      }
     }
   };
 
@@ -165,6 +228,9 @@ export default function ChatPage() {
         requestBody.conversation_id = conversationId;
       }
 
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
       const response = await chatApi.post(`/api/${user.id}/chat`, requestBody);
 
       const data = response.data;
@@ -186,8 +252,12 @@ export default function ChatPage() {
     } catch (error: any) {
       console.error("Error sending message:", error);
 
-      // Show more specific error messages
-      if (error.response?.status === 401) {
+      // Check if the error message indicates authentication issue
+      if (error.message && (error.message.includes("Invalid or expired session") || error.message.includes("Unauthorized access"))) {
+        toast.error("Session expired. Please log in again.");
+        // Optionally redirect to login
+        window.location.href = "/login";
+      } else if (error.response?.status === 401) {
         toast.error("Session expired. Please log in again.");
         // Optionally redirect to login
         window.location.href = "/login";

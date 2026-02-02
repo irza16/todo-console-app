@@ -33,7 +33,11 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origin.split(","),
+    allow_origins=[
+        "http://localhost:3000",  # ← Must include this for local dev
+        "https://todo-console-app-orcin.vercel.app",
+        *settings.cors_origin.split(",")  # Include any additional origins from settings
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
