@@ -124,7 +124,7 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
     # Call the Groq API with tools
     client = get_client()
     response = client.chat.completions.create(
-        model="llama-3.3-70b-versatile",  # Using Groq's powerful model
+        model="llama-3.2-90b-vision-preview",  # Using Groq's currently supported model
         messages=messages,
         tools=tools,
         tool_choice="auto",
@@ -186,7 +186,7 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
             # Get the final response from the assistant
             final_client = get_client()
             final_response = final_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",
+                model="llama-3.2-90b-vision-preview",
                 messages=messages,
             )
 
