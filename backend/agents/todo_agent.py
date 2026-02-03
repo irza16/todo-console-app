@@ -124,7 +124,7 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
     # Call the Groq API with tools
     client = get_client()
     response = client.chat.completions.create(
-        model="llama-3.2-90b-vision-preview",  # Using Groq's currently supported model
+        model="llama-3.3-70b-versatile",  # Using Groq's currently recommended model
         messages=messages,
         tools=tools,
         tool_choice="auto",
@@ -133,6 +133,44 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
     # Extract the response
     response_message = response.choices[0].message
     tool_calls = response_message.tool_calls
+
+    # Check if the message intent suggests a CRUD operation but no tool was called
+    message_lower = message.lower()
+    crud_keywords = ["add", "create", "delete", "remove", "edit", "update", "complete", "finish", "done"]
+    has_crud_intent = any(keyword in message_lower for keyword in crud_keywords)
+
+    if has_crud_intent and not tool_calls:
+        # Force tool usage by retrying with a stricter system prompt
+        strict_system_prompt = {
+            "role": "system",
+            "content": "You are a helpful AI assistant that helps users manage their todo tasks. "
+                      "USE THE AVAILABLE TOOLS to add, list, update, complete, or delete tasks. "
+                      "If the user wants to add, create, delete, edit, update, complete, or remove a task, "
+                      "YOU MUST USE THE APPROPRIATE TOOL. Do not respond without using tools for these operations."
+        }
+
+        # Reconstruct messages with the stricter system prompt
+        strict_messages = [strict_system_prompt]
+        for msg in conversation_history:
+            strict_messages.append({
+                "role": msg.get("role", "user"),
+                "content": msg.get("content", "")
+            })
+        strict_messages.append({
+            "role": "user",
+            "content": message
+        })
+
+        # Retry with stricter prompt
+        strict_response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
+            messages=strict_messages,
+            tools=tools,
+            tool_choice="auto",
+        )
+
+        response_message = strict_response.choices[0].message
+        tool_calls = response_message.tool_calls
 
     # Process tool calls if any
     tool_results = []
@@ -186,7 +224,7 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
             # Get the final response from the assistant
             final_client = get_client()
             final_response = final_client.chat.completions.create(
-                model="llama-3.2-90b-vision-preview",
+                model="llama-3.3-70b-versatile",
                 messages=messages,
             )
 
