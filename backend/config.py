@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 1440  # 24 hours
 
     # CORS
-    cors_origin: str = "http://localhost:3000"
+    cors_origin: str = "*"
 
     # Groq
     groq_api_key: str = ""

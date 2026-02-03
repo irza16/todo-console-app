@@ -6,7 +6,7 @@ Conversational AI assistant that allows users to manage their todo tasks through
 ## Phase 1: Setup & Project Initialization
 
 - [x] T001 Set up project dependencies for MCP and OpenAI integration in requirements.txt
-- [x] T002 Configure environment variables for OPENAI_API_KEY and database connections
+- [x] T002 Configure environment variables for GROQ_API_KEY and database connections
 - [x] T003 Install OpenAI Agents SDK and Official MCP SDK dependencies
 - [x] T004 Create project directory structure for MCP server components
 - [x] T005 Create project directory structure for agent components

@@ -63,7 +63,7 @@ promptText: |
   - Conversation storage: Database (conversations + messages tables)
   - MCP tools: Stateless functions that accept user_id parameter
   - No in-memory conversation state (server must be restartable)
-  - OpenAI API key: From environment variable OPENAI_API_KEY
+  - OpenAI API key: From environment variable GROQ_API_KEY
   - Timeline: Complete by December 21, 2025
 
   Building:
