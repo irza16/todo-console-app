@@ -10,43 +10,38 @@ from db import engine
 
 
 class AddTaskArguments(BaseModel):
-    user_id: str
     title: str
     description: Optional[str] = None
 
 
 class ListTasksArguments(BaseModel):
-    user_id: str
     status: Optional[str] = "all"  # "all", "pending", "completed"
 
 
 class CompleteTaskArguments(BaseModel):
-    user_id: str
     task_id: int
 
 
 class UpdateTaskArguments(BaseModel):
-    user_id: str
     task_id: int
     title: Optional[str] = None
     description: Optional[str] = None
 
 
 class DeleteTaskArguments(BaseModel):
-    user_id: str
     task_id: int
 
 
-def add_task(args: AddTaskArguments) -> Dict[str, Any]:
+def add_task(args: AddTaskArguments, user_id: str) -> Dict[str, Any]:
     """
     Add a new task for a user
     """
     with Session(engine) as session:
         # Validate user exists and get user_id as integer
         try:
-            user_id_int = int(args.user_id)
+            user_id_int = int(user_id)
         except ValueError:
-            raise ValueError(f"Invalid user_id: {args.user_id}")
+            raise ValueError(f"Invalid user_id: {user_id}")
 
         # Verify the user exists
         user = session.get(User, user_id_int)
@@ -70,16 +65,16 @@ def add_task(args: AddTaskArguments) -> Dict[str, Any]:
         }
 
 
-def list_tasks(args: ListTasksArguments) -> List[Dict[str, Any]]:
+def list_tasks(args: ListTasksArguments, user_id: str) -> List[Dict[str, Any]]:
     """
     List tasks for a user with optional status filtering
     """
     with Session(engine) as session:
         # Validate user exists and get user_id as integer
         try:
-            user_id_int = int(args.user_id)
+            user_id_int = int(user_id)
         except ValueError:
-            raise ValueError(f"Invalid user_id: {args.user_id}")
+            raise ValueError(f"Invalid user_id: {user_id}")
 
         # Verify the user exists
         user = session.get(User, user_id_int)
@@ -106,16 +101,16 @@ def list_tasks(args: ListTasksArguments) -> List[Dict[str, Any]]:
         ]
 
 
-def complete_task(args: CompleteTaskArguments) -> Dict[str, Any]:
+def complete_task(args: CompleteTaskArguments, user_id: str) -> Dict[str, Any]:
     """
     Mark a task as completed
     """
     with Session(engine) as session:
         # Validate user exists and get user_id as integer
         try:
-            user_id_int = int(args.user_id)
+            user_id_int = int(user_id)
         except ValueError:
-            raise ValueError(f"Invalid user_id: {args.user_id}")
+            raise ValueError(f"Invalid user_id: {user_id}")
 
         # Verify the user exists
         user = session.get(User, user_id_int)
@@ -142,16 +137,16 @@ def complete_task(args: CompleteTaskArguments) -> Dict[str, Any]:
         }
 
 
-def update_task(args: UpdateTaskArguments) -> Dict[str, Any]:
+def update_task(args: UpdateTaskArguments, user_id: str) -> Dict[str, Any]:
     """
     Update task title or description
     """
     with Session(engine) as session:
         # Validate user exists and get user_id as integer
         try:
-            user_id_int = int(args.user_id)
+            user_id_int = int(user_id)
         except ValueError:
-            raise ValueError(f"Invalid user_id: {args.user_id}")
+            raise ValueError(f"Invalid user_id: {user_id}")
 
         # Verify the user exists
         user = session.get(User, user_id_int)
@@ -182,16 +177,16 @@ def update_task(args: UpdateTaskArguments) -> Dict[str, Any]:
         }
 
 
-def delete_task(args: DeleteTaskArguments) -> Dict[str, Any]:
+def delete_task(args: DeleteTaskArguments, user_id: str) -> Dict[str, Any]:
     """
     Delete a task
     """
     with Session(engine) as session:
         # Validate user exists and get user_id as integer
         try:
-            user_id_int = int(args.user_id)
+            user_id_int = int(user_id)
         except ValueError:
-            raise ValueError(f"Invalid user_id: {args.user_id}")
+            raise ValueError(f"Invalid user_id: {user_id}")
 
         # Verify the user exists
         user = session.get(User, user_id_int)

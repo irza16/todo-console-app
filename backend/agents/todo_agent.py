@@ -47,7 +47,14 @@ def initialize_todo_agent():
             "function": {
                 "name": "add_task",
                 "description": "Add a new task for a user",
-                "parameters": AddTaskArguments.model_json_schema(),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "title": {"type": "string", "description": "Task title"},
+                        "description": {"type": "string", "description": "Task description (optional)"}
+                    },
+                    "required": ["title"]
+                }
             }
         },
         {
@@ -55,7 +62,12 @@ def initialize_todo_agent():
             "function": {
                 "name": "list_tasks",
                 "description": "List tasks for a user with optional status filtering",
-                "parameters": ListTasksArguments.model_json_schema(),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "status": {"type": "string", "description": "Filter by status: 'all', 'pending', or 'completed'", "enum": ["all", "pending", "completed"]}
+                    }
+                }
             }
         },
         {
@@ -63,7 +75,13 @@ def initialize_todo_agent():
             "function": {
                 "name": "complete_task",
                 "description": "Mark a task as completed",
-                "parameters": CompleteTaskArguments.model_json_schema(),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task_id": {"type": "integer", "description": "ID of the task to complete"}
+                    },
+                    "required": ["task_id"]
+                }
             }
         },
         {
@@ -71,7 +89,15 @@ def initialize_todo_agent():
             "function": {
                 "name": "update_task",
                 "description": "Update task title or description",
-                "parameters": UpdateTaskArguments.model_json_schema(),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task_id": {"type": "integer", "description": "ID of the task to update"},
+                        "title": {"type": "string", "description": "New task title (optional)"},
+                        "description": {"type": "string", "description": "New task description (optional)"}
+                    },
+                    "required": ["task_id"]
+                }
             }
         },
         {
@@ -79,7 +105,13 @@ def initialize_todo_agent():
             "function": {
                 "name": "delete_task",
                 "description": "Delete a task",
-                "parameters": DeleteTaskArguments.model_json_schema(),
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "task_id": {"type": "integer", "description": "ID of the task to delete"}
+                    },
+                    "required": ["task_id"]
+                }
             }
         }
     ]
@@ -195,19 +227,15 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
 
             # Map function names to actual functions
             function_map = {
-                "add_task": lambda args: add_task(AddTaskArguments(**args)),
-                "list_tasks": lambda args: list_tasks(ListTasksArguments(**args)),
-                "complete_task": lambda args: complete_task(CompleteTaskArguments(**args)),
-                "update_task": lambda args: update_task(UpdateTaskArguments(**args)),
-                "delete_task": lambda args: delete_task(DeleteTaskArguments(**args)),
+                "add_task": lambda args: add_task(AddTaskArguments(**args), user_id),
+                "list_tasks": lambda args: list_tasks(ListTasksArguments(**args), user_id),
+                "complete_task": lambda args: complete_task(CompleteTaskArguments(**args), user_id),
+                "update_task": lambda args: update_task(UpdateTaskArguments(**args), user_id),
+                "delete_task": lambda args: delete_task(DeleteTaskArguments(**args), user_id),
             }
 
             if function_name in function_map:
                 try:
-                    # Add user_id to the arguments if not present
-                    if "user_id" not in function_args:
-                        function_args["user_id"] = user_id
-
                     result = function_map[function_name](function_args)
                     print(f"DEBUG: Tool '{function_name}' executed successfully, result: {result}")
                     tool_results.append({
