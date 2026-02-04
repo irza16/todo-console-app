@@ -134,10 +134,17 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
     response_message = response.choices[0].message
     tool_calls = response_message.tool_calls
 
+    # Debug logging
+    print(f"DEBUG: User message: {message}")
+    print(f"DEBUG: Agent response: {response_message}")
+    print(f"DEBUG: Tool calls: {tool_calls}")
+
     # Check if the message intent suggests a CRUD operation but no tool was called
     message_lower = message.lower()
     crud_keywords = ["add", "create", "delete", "remove", "edit", "update", "complete", "finish", "done"]
     has_crud_intent = any(keyword in message_lower for keyword in crud_keywords)
+
+    print(f"DEBUG: Has CRUD intent: {has_crud_intent}, Tool calls exist: {bool(tool_calls)}")
 
     if has_crud_intent and not tool_calls:
         # Force tool usage by retrying with a stricter system prompt
@@ -162,6 +169,7 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
         })
 
         # Retry with stricter prompt
+        print(f"DEBUG: Retrying with stricter prompt due to CRUD intent without tool calls")
         strict_response = client.chat.completions.create(
             model="llama-3.3-70b-versatile",
             messages=strict_messages,
@@ -172,12 +180,18 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
         response_message = strict_response.choices[0].message
         tool_calls = response_message.tool_calls
 
+        # Debug logging after retry
+        print(f"DEBUG: After retry - Agent response: {response_message}")
+        print(f"DEBUG: After retry - Tool calls: {tool_calls}")
+
     # Process tool calls if any
     tool_results = []
     if tool_calls:
+        print(f"DEBUG: Processing {len(tool_calls)} tool calls")
         for tool_call in tool_calls:
             function_name = tool_call.function.name
             function_args = json.loads(tool_call.function.arguments)
+            print(f"DEBUG: Executing tool '{function_name}' with args: {function_args}")
 
             # Map function names to actual functions
             function_map = {
@@ -195,6 +209,7 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
                         function_args["user_id"] = user_id
 
                     result = function_map[function_name](function_args)
+                    print(f"DEBUG: Tool '{function_name}' executed successfully, result: {result}")
                     tool_results.append({
                         "tool_call_id": tool_call.id,
                         "role": "tool",
@@ -202,6 +217,7 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
                         "content": json.dumps(result),
                     })
                 except Exception as e:
+                    print(f"DEBUG: Error executing tool '{function_name}': {str(e)}")
                     tool_results.append({
                         "tool_call_id": tool_call.id,
                         "role": "tool",
@@ -209,6 +225,7 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
                         "content": json.dumps({"error": str(e)}),
                     })
             else:
+                print(f"DEBUG: Unknown function: {function_name}")
                 tool_results.append({
                     "tool_call_id": tool_call.id,
                     "role": "tool",
