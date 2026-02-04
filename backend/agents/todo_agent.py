@@ -247,6 +247,29 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
                         "name": function_name,
                         "content": json.dumps(result),
                     })
+                except ValueError as e:
+                    # Handle validation errors (like meaningless titles)
+                    if "not meaningful" in str(e):
+                        # Create a message asking for clarification instead of just an error
+                        clarification_needed = {
+                            "error": f"{str(e)}. Please ask the user to provide a meaningful task title.",
+                            "need_clarification": True
+                        }
+                        tool_results.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "name": function_name,
+                            "content": json.dumps(clarification_needed),
+                        })
+                        print(f"DEBUG: Meaningless title detected, requesting clarification: {str(e)}")
+                    else:
+                        print(f"DEBUG: Error executing tool '{function_name}': {str(e)}")
+                        tool_results.append({
+                            "tool_call_id": tool_call.id,
+                            "role": "tool",
+                            "name": function_name,
+                            "content": json.dumps({"error": str(e)}),
+                        })
                 except Exception as e:
                     print(f"DEBUG: Error executing tool '{function_name}': {str(e)}")
                     tool_results.append({

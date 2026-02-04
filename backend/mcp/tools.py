@@ -48,6 +48,24 @@ def add_task(args: AddTaskArguments, user_id: str) -> Dict[str, Any]:
         if not user:
             raise PermissionError(f"User with id {user_id_int} does not exist")
 
+        # Validate the title is meaningful (not random characters, placeholders, etc.)
+        title = args.title.strip().lower()
+
+        # Check for meaningless/random titles
+        meaningless_patterns = [
+            r'^[a-z]{8,}$',  # Long sequences of random letters
+            r'^[a-zA-Z]{10,}$',  # Very long random letter combinations
+            r'^\s*$',  # Empty or whitespace only
+            r'^(ok|okay|yes|no|abc|xyz|test|task|item|thing|stuff|random|placeholder|sample|demo)\s*$',  # Common meaningless words
+            r'^(add|create|new)\s+(task|item|todo)\s*$',  # Generic phrases
+            r'^(ok ok|xyz xyz|abc abc)$',  # Repeated meaningless words
+        ]
+
+        import re
+        for pattern in meaningless_patterns:
+            if re.match(pattern, title):
+                raise ValueError(f"Task title '{args.title}' is not meaningful. Please provide a specific task title.")
+
         task = Task(
             user_id=user_id_int,
             title=args.title,
