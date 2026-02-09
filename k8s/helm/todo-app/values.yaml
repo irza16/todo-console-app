@@ -1,0 +1,62 @@
+# Default values for todo-app
+
+# Frontend configuration
+frontend:
+  replicaCount: 1
+  image:
+    repository: todo-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  healthCheck:
+    initialDelaySeconds: 10
+    periodSeconds: 30
+  env:
+    NEXT_PUBLIC_API_URL: "http://todo-backend:8000"
+
+# Backend configuration
+backend:
+  replicaCount: 1
+  image:
+    repository: todo-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+  healthCheck:
+    initialDelaySeconds: 10
+    periodSeconds: 30
+  config:
+    corsOrigin: "*"
+    logLevel: "info"
+    pythonUnbuffered: "1"
+  secrets:
+    # These should be provided during installation
+    # databaseUrl: ""
+    # jwtSecret: ""
+
+# Node selector (optional)
+nodeSelector: {}
+
+# Tolerations (optional)
+tolerations: []
+
+# Affinity (optional)
+affinity: []
