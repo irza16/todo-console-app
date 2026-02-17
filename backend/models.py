@@ -33,6 +33,12 @@ class Task(SQLModel, table=True):
     description: Optional[str] = Field(default=None, max_length=1000)
     completed: bool = Field(default=False, index=True)
 
+    # NEW FIELDS - ADD THESE:
+    priority: Optional[str] = Field(default="Medium", max_length=20)
+    tags: Optional[str] = Field(default=None, max_length=1000)
+    is_recurring: bool = Field(default=False)
+    recurrence_pattern: Optional[str] = Field(default=None, max_length=20)
+
     # Timestamps
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)

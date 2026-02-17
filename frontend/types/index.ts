@@ -35,6 +35,10 @@ export interface Task {
   title: string;
   description: string | null;
   completed: boolean;
+  priority?: 'Low' | 'Medium' | 'High' | 'Urgent';
+  tags?: string[] | string;
+  is_recurring?: boolean;
+  recurrence_pattern?: 'daily' | 'weekly' | 'monthly' | 'weekdays' | null;
   created_at: string;
   updated_at: string;
 }
@@ -42,12 +46,20 @@ export interface Task {
 export interface TaskCreate {
   title: string;
   description?: string;
+  priority?: 'Low' | 'Medium' | 'High' | 'Urgent';
+  tags?: string[] | string;
+  is_recurring?: boolean;
+  recurrence_pattern?: 'daily' | 'weekly' | 'monthly' | 'weekdays' | null;
 }
 
 export interface TaskUpdate {
   title?: string;
   description?: string;
   completed?: boolean;
+  priority?: 'Low' | 'Medium' | 'High' | 'Urgent';
+  tags?: string[] | string;
+  is_recurring?: boolean;
+  recurrence_pattern?: 'daily' | 'weekly' | 'monthly' | 'weekdays' | null;
 }
 
 export interface TaskListResponse {

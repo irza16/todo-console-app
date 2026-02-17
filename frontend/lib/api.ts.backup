@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig } from "axios";
-import type { SignupRequest, LoginRequest, AuthResponse, Task, TaskCreate, TaskUpdate, TaskListResponse } from "@/types";
+import type { SignupRequest, LoginRequest, AuthResponse, Task, TaskCreate, TaskListResponse } from "@/types";
 
 // API base URL
 // - For local development: use http://localhost:8000
@@ -108,7 +108,7 @@ export const taskApi = {
     return response.data;
   },
 
-  updateTask: async (userId: number, taskId: number, data: Partial<TaskUpdate>): Promise<Task> => {
+  updateTask: async (userId: number, taskId: number, data: Partial<TaskCreate>): Promise<Task> => {
     const response = await api.put<Task>(`/${userId}/tasks/${taskId}`, data);
     return response.data;
   },

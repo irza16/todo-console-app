@@ -72,9 +72,19 @@ class TaskCRUD:
         return result.scalars().all()
 
     @staticmethod
-    def create(session: Session, user_id: int, title: str, description: Optional[str] = None) -> Task:
+    def create(session: Session, user_id: int, title: str, description: Optional[str] = None,
+               priority: Optional[str] = "Medium", tags: Optional[str] = None,
+               is_recurring: bool = False, recurrence_pattern: Optional[str] = None) -> Task:
         """Create a new task for a user."""
-        task = Task(user_id=user_id, title=title, description=description)
+        task = Task(
+            user_id=user_id,
+            title=title,
+            description=description,
+            priority=priority,
+            tags=tags,
+            is_recurring=is_recurring,
+            recurrence_pattern=recurrence_pattern
+        )
         session.add(task)
         session.commit()
         session.refresh(task)

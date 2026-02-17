@@ -12,6 +12,10 @@ from db import engine
 class AddTaskArguments(BaseModel):
     title: str
     description: Optional[str] = None
+    priority: Optional[str] = "Medium"  # Options: Low, Medium, High, Urgent
+    tags: Optional[str] = None  # Comma-separated string of tags
+    is_recurring: Optional[bool] = False  # Whether the task repeats
+    recurrence_pattern: Optional[str] = None  # Options: daily, weekly, monthly, weekdays (only if is_recurring is True)
 
 
 class ListTasksArguments(BaseModel):
@@ -26,6 +30,10 @@ class UpdateTaskArguments(BaseModel):
     task_id: int
     title: Optional[str] = None
     description: Optional[str] = None
+    priority: Optional[str] = None  # Options: Low, Medium, High, Urgent
+    tags: Optional[str] = None  # Comma-separated string of tags
+    is_recurring: Optional[bool] = None  # Whether the task repeats
+    recurrence_pattern: Optional[str] = None  # Options: daily, weekly, monthly, weekdays (only if is_recurring is True)
 
 
 class DeleteTaskArguments(BaseModel):
@@ -66,10 +74,30 @@ def add_task(args: AddTaskArguments, user_id: str) -> Dict[str, Any]:
             if re.match(pattern, title):
                 raise ValueError(f"Task title '{args.title}' is not meaningful. Please provide a specific task title.")
 
+        # Validate recurrence_pattern if provided
+        if args.recurrence_pattern and not args.is_recurring:
+            raise ValueError("Recurrence pattern can only be set when is_recurring is true")
+
+        # Validate recurrence pattern value if provided
+        if args.recurrence_pattern and args.is_recurring:
+            valid_recurrence_patterns = ["daily", "weekly", "monthly", "weekdays"]
+            if args.recurrence_pattern not in valid_recurrence_patterns:
+                raise ValueError(f"Invalid recurrence pattern: {args.recurrence_pattern}. Must be one of: {', '.join(valid_recurrence_patterns)}")
+
+        # Validate priority value if provided
+        if args.priority:
+            valid_priorities = ["Low", "Medium", "High", "Urgent"]
+            if args.priority not in valid_priorities:
+                raise ValueError(f"Invalid priority: {args.priority}. Must be one of: {', '.join(valid_priorities)}")
+
         task = Task(
             user_id=user_id_int,
             title=args.title,
             description=args.description,
+            priority=args.priority,
+            tags=args.tags,
+            is_recurring=args.is_recurring,
+            recurrence_pattern=args.recurrence_pattern,
             completed=False
         )
         session.add(task)
@@ -113,7 +141,11 @@ def list_tasks(args: ListTasksArguments, user_id: str) -> List[Dict[str, Any]]:
                 "id": task.id,
                 "title": task.title,
                 "description": task.description,
-                "completed": task.completed
+                "completed": task.completed,
+                "priority": task.priority,
+                "tags": task.tags,
+                "is_recurring": task.is_recurring,
+                "recurrence_pattern": task.recurrence_pattern
             }
             for task in tasks
         ]
@@ -183,6 +215,27 @@ def update_task(args: UpdateTaskArguments, user_id: str) -> Dict[str, Any]:
             task.title = args.title
         if args.description is not None:
             task.description = args.description
+        if args.priority is not None:
+            # Validate priority value
+            valid_priorities = ["Low", "Medium", "High", "Urgent"]
+            if args.priority not in valid_priorities:
+                raise ValueError(f"Invalid priority: {args.priority}. Must be one of: {', '.join(valid_priorities)}")
+            task.priority = args.priority
+        if args.tags is not None:
+            task.tags = args.tags
+        if args.is_recurring is not None:
+            task.is_recurring = args.is_recurring
+        if args.recurrence_pattern is not None:
+            # Validate recurrence_pattern if provided
+            if not args.is_recurring:
+                raise ValueError("Recurrence pattern can only be set when is_recurring is true")
+
+            # Validate recurrence pattern value
+            valid_recurrence_patterns = ["daily", "weekly", "monthly", "weekdays"]
+            if args.recurrence_pattern not in valid_recurrence_patterns:
+                raise ValueError(f"Invalid recurrence pattern: {args.recurrence_pattern}. Must be one of: {', '.join(valid_recurrence_patterns)}")
+
+            task.recurrence_pattern = args.recurrence_pattern
 
         session.add(task)
         session.commit()
@@ -191,7 +244,11 @@ def update_task(args: UpdateTaskArguments, user_id: str) -> Dict[str, Any]:
         return {
             "task_id": task.id,
             "status": "updated",
-            "title": task.title
+            "title": task.title,
+            "priority": task.priority,
+            "tags": task.tags,
+            "is_recurring": task.is_recurring,
+            "recurrence_pattern": task.recurrence_pattern
         }
 
 

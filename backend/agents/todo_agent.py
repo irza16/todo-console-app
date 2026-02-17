@@ -51,7 +51,11 @@ def initialize_todo_agent():
                     "type": "object",
                     "properties": {
                         "title": {"type": "string", "description": "Task title"},
-                        "description": {"type": "string", "description": "Task description (optional)"}
+                        "description": {"type": "string", "description": "Task description (optional)"},
+                        "priority": {"type": "string", "description": "Task priority (optional)", "enum": ["Low", "Medium", "High", "Urgent"], "default": "Medium"},
+                        "tags": {"type": "string", "description": "Comma-separated tags for the task (optional)"},
+                        "is_recurring": {"type": "boolean", "description": "Whether the task repeats (optional)", "default": False},
+                        "recurrence_pattern": {"type": "string", "description": "Pattern for recurring tasks (only if is_recurring is true)", "enum": ["daily", "weekly", "monthly", "weekdays"]}
                     },
                     "required": ["title"]
                 }
@@ -88,13 +92,17 @@ def initialize_todo_agent():
             "type": "function",
             "function": {
                 "name": "update_task",
-                "description": "Update task title or description",
+                "description": "Update task title, description, priority, tags, or recurring status",
                 "parameters": {
                     "type": "object",
                     "properties": {
                         "task_id": {"type": "integer", "description": "ID of the task to update"},
                         "title": {"type": "string", "description": "New task title (optional)"},
-                        "description": {"type": "string", "description": "New task description (optional)"}
+                        "description": {"type": "string", "description": "New task description (optional)"},
+                        "priority": {"type": "string", "description": "New task priority (optional)", "enum": ["Low", "Medium", "High", "Urgent"]},
+                        "tags": {"type": "string", "description": "New comma-separated tags for the task (optional)"},
+                        "is_recurring": {"type": "boolean", "description": "Whether the task repeats (optional)"},
+                        "recurrence_pattern": {"type": "string", "description": "New pattern for recurring tasks (only if is_recurring is true)", "enum": ["daily", "weekly", "monthly", "weekdays"]}
                     },
                     "required": ["task_id"]
                 }
@@ -135,6 +143,7 @@ def process_chat_message(user_id: str, message: str, conversation_history: List[
             "role": "system",
             "content": "You are a helpful AI assistant that helps users manage their todo tasks. "
                       "Use the available tools to add, list, update, complete, or delete tasks. "
+                      "When adding or updating tasks, you can set priority (Low, Medium, High, Urgent), tags (comma-separated), and make tasks recurring (with patterns: daily, weekly, monthly, weekdays). "
                       "Always confirm actions with the user in a friendly manner. "
                       "If a user's request is ambiguous, lacks required information, or contains meaningless text (like 'xyz', 'ok ok', 'abc'), ask for clarification BEFORE using tools. "
                       "For example, if someone says 'add task xyz' or 'add task ok ok', ask them to provide a meaningful task title. "
